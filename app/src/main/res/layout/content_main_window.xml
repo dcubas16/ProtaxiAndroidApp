@@ -12,4 +12,10 @@
     tools:context="org.protaxiandroidapp.MainWindow"
     tools:showIn="@layout/app_bar_main_window">
 
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"></FrameLayout>
 </RelativeLayout>
