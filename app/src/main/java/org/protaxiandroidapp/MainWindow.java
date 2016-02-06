@@ -4,17 +4,15 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -24,8 +22,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
+
+import layout.AboutFragment;
+import layout.LoginFragment;
+import layout.SendFragment;
 
 public class MainWindow extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener {
@@ -46,14 +47,14 @@ public class MainWindow extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -65,7 +66,21 @@ public class MainWindow extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, new MainFragment()).commit();
+        android.support.v4.app.FragmentManager sFm = getSupportFragmentManager();
+        Fragment fragment = null;
+
+        if (supportMapFragment.isAdded())
+            sFm.beginTransaction().hide(supportMapFragment).commit();
+
+
+        sFm.beginTransaction().add(R.id.content_frame, supportMapFragment).commit();
+
+
+//        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment);
+
+
+        drawer.closeDrawer(GravityCompat.START);
+
 
         supportMapFragment.getMapAsync(this);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -117,21 +132,33 @@ public class MainWindow extends AppCompatActivity
         if (supportMapFragment.isAdded())
             sFm.beginTransaction().hide(supportMapFragment).commit();
 
-        if (id == R.id.nav_manage) {
-            fragment = new MainFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment);
+        if (id == R.id.nav_login) {
+            fragment = new LoginFragment();
+
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+            Log.e("Fragment", "Login");
+
         } else if (id == R.id.nav_share) {
+            fragment = new MainFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+
             if (!supportMapFragment.isAdded()) {
                 sFm.beginTransaction().add(R.id.content_frame, supportMapFragment).commit();
             } else {
                 sFm.beginTransaction().show(supportMapFragment).commit();
             }
-        } else if (id == R.id.nav_send) {
-            fragment = new MainFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment);
-        }
+            Log.e("Fragment", "Share1");
 
-//        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment);
+        } else if (id == R.id.nav_send) {
+            fragment = new SendFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+            Log.e("Fragment", "Send1");
+
+        } else if (id == R.id.nav_about) {
+            fragment = new AboutFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+            Log.e("Fragment", "About1");
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -139,13 +166,17 @@ public class MainWindow extends AppCompatActivity
         return true;
     }
 
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        googleMap.setMyLocationEnabled(true);
+
         LatLng sydney = new LatLng(-11.991039, -77.078902);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 15));
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+//        googleMap.addMarker(new MarkerOptions());
 
     }
 

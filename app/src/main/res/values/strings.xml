@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">ProtaxiAndroidApp</string>
-    <string name="title_activity_drivers_ubication">Map</string>
+    <string name="title_activity_drivers_ubication">Protaxi</string>
     <string name="title_activity_main_window">MainWindow</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
