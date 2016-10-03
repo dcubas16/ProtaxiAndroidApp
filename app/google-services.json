@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1032311192447",
+    "firebase_url": "https://arched-hybrid-118216.firebaseio.com",
+    "project_id": "arched-hybrid-118216",
+    "storage_bucket": "arched-hybrid-118216.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032311192447:android:e6d5f2d8a29fd2b4",
+        "android_client_info": {
+          "package_name": "org.protaxiandroidapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032311192447-5g9r07b1onjg7ie96ihgjcf44rcf0r3c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk0OoqC6y_e_x597Cb9ixPjsCnxd3qgkY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

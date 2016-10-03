@@ -2,4 +2,18 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:layout_width="match_parent" android:layout_height="match_parent">
 
+    <Button
+        android:layout_width="178dp"
+        android:layout_height="wrap_content"
+        android:text="Solicitar Taxi"
+        android:id="@+id/btnRequestTaxi"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="54dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:background="#262dff"
+        android:textColor="#e6e6e6"
+        android:layout_gravity="center_horizontal|bottom" />
 </FrameLayout>

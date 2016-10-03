@@ -2,7 +2,10 @@ package org.protaxiandroidapp;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.graphics.BitmapFactory;
+import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,7 +16,13 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,16 +31,34 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.protaxiandroidapp.restful.entities.Greeting;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import layout.AboutFragment;
 import layout.LoginFragment;
 import layout.SendFragment;
 
+
 public class MainWindow extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener {
 
     SupportMapFragment supportMapFragment;
+    Firebase mRef;
+    MarkerOptions markerOptions;
+    Button btnRequestTaxi;
+    Marker marker;
+    Button btnLlamarRest;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -46,15 +73,6 @@ public class MainWindow extends AppCompatActivity
         setContentView(R.layout.activity_main_window);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -86,6 +104,10 @@ public class MainWindow extends AppCompatActivity
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        Firebase.setAndroidContext(this);
+
+
     }
 
     @Override
@@ -172,12 +194,39 @@ public class MainWindow extends AppCompatActivity
         googleMap.setMyLocationEnabled(true);
 
         LatLng sydney = new LatLng(-11.991039, -77.078902);
+        LatLng sydney1 = new LatLng(-11.983347, -77.060316);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 15));
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-//        googleMap.addMarker(new MarkerOptions());
 
+
+        markerOptions = new MarkerOptions().position(sydney).snippet("Toyota Corolla 2015 \n Placa: PKY-4596\n *****");
+        markerOptions.title(getAddressFromLatLng(sydney));
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_local_taxi_green)));
+
+        MarkerOptions markerOptions1 = new MarkerOptions().position(sydney1).snippet("Kia Optima 2016 \n Placa: ABC-1234\n *****");
+        markerOptions1.title(getAddressFromLatLng(sydney));
+        markerOptions1.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_local_taxi_red)));
+
+
+        marker = googleMap.addMarker(markerOptions);
+        marker.setTitle("Diego Nuñez Cubas");
+        googleMap.addMarker(markerOptions1).setTitle("Juan Carlos Suarez");
+
+    }
+
+    private String getAddressFromLatLng(LatLng latLng) {
+        Geocoder geocoder = new Geocoder(this);
+
+        String address = "";
+        try{
+            address = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0).getAddressLine(0);
+        }catch (IOException e){
+
+        }
+
+        return address;
     }
 
     @Override
@@ -198,6 +247,77 @@ public class MainWindow extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
+
+        mRef = new Firebase("https://arched-hybrid-118216.firebaseio.com/longitud");
+        final Firebase mRefLlamar = new Firebase("https://arched-hybrid-118216.firebaseio.com/llamar");
+        final Firebase mRefAceptaLlamada = new Firebase("https://arched-hybrid-118216.firebaseio.com/respondeLlamada");
+
+        btnRequestTaxi = (Button)findViewById(R.id.btnLlamarTaxi);
+
+        btnRequestTaxi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mRef.setValue("-77.077962");
+                mRefLlamar.setValue(1);
+            }
+        });
+
+
+        btnLlamarRest = (Button)findViewById(R.id.btnLlamarRest);
+        btnLlamarRest.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                new HttpRequestTask().execute();
+            }
+        });
+
+        mRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String data = dataSnapshot.getValue(String.class);
+                LatLng latLng = new LatLng(-11.994467, Double.parseDouble(data));
+                //markerOptions.position(latLng);
+                marker.setPosition(latLng);
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
+
+        /*
+        mRefAceptaLlamada.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String data = dataSnapshot.getValue(String.class);
+
+                int esLlamadaRespondida = Integer.parseInt(data);
+
+                if (esLlamadaRespondida == 1) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(MainWindow.this).create();
+                    alertDialog.setTitle("Alert");
+                    alertDialog.setMessage("El conductor Diego Nuñez acepto su solicitud, en unos minutos estará en su ubicación");
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    //mRefRespondeLlamada.setValue(1);
+
+                                }
+                            });
+                    alertDialog.show();
+                }
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
+*/
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -233,5 +353,51 @@ public class MainWindow extends AppCompatActivity
         );
         AppIndex.AppIndexApi.end(client, viewAction);
         client.disconnect();
+    }
+
+    private class HttpRequestTask extends AsyncTask<Void, Void, Greeting> {
+
+        public HttpRequestTask(){}
+
+        @Override
+        protected Greeting doInBackground(Void... params) {
+            try {
+                final String url = "http://rest-service.guides.spring.io/greeting";
+
+                RestTemplate rest = new RestTemplate();
+
+                rest.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+
+                Greeting greetingRestObject = rest.getForObject(url, Greeting.class);
+
+                Greeting greeting = new Greeting();
+
+                return greeting;
+
+            } catch (Exception e) {
+                Log.e("MainWindow", e.getMessage(), e);
+                return null;
+            }
+        }
+
+        private List<HttpMessageConverter<?>> getMessageConverters() {
+            List<HttpMessageConverter<?>> converters =
+                    new ArrayList<HttpMessageConverter<?>>();
+            converters.add(new MappingJackson2HttpMessageConverter());
+            return converters;
+        }
+
+        @Override
+        protected void onPostExecute(Greeting greeting) {
+            /*TextView txtRest = (TextView)findViewById(R.id.txtRest);
+            TextView txtRest1 = (TextView)findViewById(R.id.txtRest1);
+            txtRest.setText(greeting.getId());
+            txtRest1.setText(greeting.getContent());*/
+            /*TextView greetingIdText = (TextView) findViewById(R.id.id_value);
+            TextView greetingContentText = (TextView) findViewById(R.id.content_value);
+            greetingIdText.setText(greeting.getId());
+            greetingContentText.setText(greeting.getContent());*/
+        }
+
     }
 }

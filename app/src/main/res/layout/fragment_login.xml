@@ -63,9 +63,29 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/action_sign_in"
                 android:textStyle="bold"
-                android:background="#24a61a" />
+                android:background="#24a61a"
+                android:nestedScrollingEnabled="false" />
 
         </LinearLayout>
     </ScrollView>
+
+    <Button
+        style="?android:textAppearanceSmall"
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/create_account"
+        android:textStyle="bold"
+        android:background="#272727"
+        android:layout_gravity="center_horizontal|bottom"
+        android:textColor="#eeeeee"/>
+
+    <TextView
+        android:layout_width="129dp"
+        android:layout_height="42dp"
+        android:text="New Text"
+        android:id="@+id/textView2"
+        android:layout_gravity="center" />
 
 </FrameLayout>

@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="org.protaxiandroidapp.MainWindow"
-    tools:showIn="@layout/app_bar_main_window">
+    tools:showIn="@layout/app_bar_main_window"
+    android:background="#5c5c5c">
 
     <FrameLayout
         android:id="@+id/content_frame"
@@ -18,12 +19,43 @@
         android:layout_marginLeft="0dp"
         android:layout_marginTop="0dp"
         android:layout_marginRight="0dp"
-        android:layout_marginBottom="0dp"
-        android:layout_margin="0dp"
         android:paddingLeft="0dp"
         android:paddingTop="0dp"
         android:paddingRight="0dp"
         android:paddingBottom="0dp"
         android:padding="0dp"
-        android:layout_alignParentTop="false"></FrameLayout>
+        android:layout_alignParentTop="false"
+        android:layout_alignParentBottom="false">
+
+        <Button
+            android:layout_width="189dp"
+            android:layout_height="68dp"
+            android:text="Llamar Taxi"
+            android:id="@+id/btnLlamarTaxi"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="189dp"
+            android:layout_height="68dp"
+            android:text="Llamar Rest"
+            android:id="@+id/btnLlamarRest"
+            android:layout_gravity="center_horizontal|top" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="41dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/txtRest"
+            android:layout_gravity="right|top" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Large Text"
+            android:id="@+id/txtRest1"
+            android:layout_gravity="right|center_vertical" />
+    </FrameLayout>
+
 </RelativeLayout>
