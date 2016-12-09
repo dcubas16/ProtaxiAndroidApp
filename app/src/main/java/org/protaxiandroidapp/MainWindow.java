@@ -2,6 +2,7 @@ package org.protaxiandroidapp;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.location.Geocoder;
 import android.net.Uri;
@@ -18,7 +19,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -35,20 +35,16 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import org.protaxiandroidapp.restful.entities.Greeting;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import layout.AboutFragment;
 import layout.LoginFragment;
 import layout.SendFragment;
-
 
 public class MainWindow extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener {
@@ -59,6 +55,7 @@ public class MainWindow extends AppCompatActivity
     Button btnRequestTaxi;
     Marker marker;
     Button btnLlamarRest;
+    //TextView txtRest = (TextView)findViewById(R.id.txtRest1);
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -106,8 +103,6 @@ public class MainWindow extends AppCompatActivity
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
         Firebase.setAndroidContext(this);
-
-
     }
 
     @Override
@@ -260,6 +255,9 @@ public class MainWindow extends AppCompatActivity
 
                 mRef.setValue("-77.077962");
                 mRefLlamar.setValue(1);
+
+//                Intent i = new Intent(getApplicationContext(), CreateAccountActivity.class);
+//                startActivity(i);
             }
         });
 
@@ -287,37 +285,6 @@ public class MainWindow extends AppCompatActivity
 
             }
         });
-
-        /*
-        mRefAceptaLlamada.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String data = dataSnapshot.getValue(String.class);
-
-                int esLlamadaRespondida = Integer.parseInt(data);
-
-                if (esLlamadaRespondida == 1) {
-                    AlertDialog alertDialog = new AlertDialog.Builder(MainWindow.this).create();
-                    alertDialog.setTitle("Alert");
-                    alertDialog.setMessage("El conductor Diego Nuñez acepto su solicitud, en unos minutos estará en su ubicación");
-                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                    //mRefRespondeLlamada.setValue(1);
-
-                                }
-                            });
-                    alertDialog.show();
-                }
-            }
-
-            @Override
-            public void onCancelled(FirebaseError firebaseError) {
-
-            }
-        });
-*/
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -362,13 +329,13 @@ public class MainWindow extends AppCompatActivity
         @Override
         protected Greeting doInBackground(Void... params) {
             try {
-                final String url = "http://rest-service.guides.spring.io/greeting";
+                final String url = "http://192.168.1.33:8081/protaxi/client/callTest";
 
                 RestTemplate rest = new RestTemplate();
 
                 rest.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
-                Greeting greetingRestObject = rest.getForObject(url, Greeting.class);
+                String greetingRestObject = rest.getForObject(url, String.class);
 
                 Greeting greeting = new Greeting();
 
@@ -388,16 +355,6 @@ public class MainWindow extends AppCompatActivity
         }
 
         @Override
-        protected void onPostExecute(Greeting greeting) {
-            /*TextView txtRest = (TextView)findViewById(R.id.txtRest);
-            TextView txtRest1 = (TextView)findViewById(R.id.txtRest1);
-            txtRest.setText(greeting.getId());
-            txtRest1.setText(greeting.getContent());*/
-            /*TextView greetingIdText = (TextView) findViewById(R.id.id_value);
-            TextView greetingContentText = (TextView) findViewById(R.id.content_value);
-            greetingIdText.setText(greeting.getId());
-            greetingContentText.setText(greeting.getContent());*/
-        }
-
+        protected void onPostExecute(Greeting greeting) { }
     }
 }

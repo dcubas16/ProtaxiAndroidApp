@@ -1,7 +1,5 @@
 package layout;
 
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Patterns;
@@ -10,31 +8,63 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+
 import org.protaxiandroidapp.R;
 import org.protaxiandroidapp.restful.RequestVolley;
+
 import java.util.HashMap;
 import java.util.Map;
 
-public class LoginFragment extends android.app.Fragment implements View.OnClickListener {
+public class CreateAccountFragment extends android.app.Fragment implements View.OnClickListener {
 
-    Button btnLogin;
-    Button btnCreateAccount;
-    EditText txtEmail;
-    EditText txtPassword;
+    private Button btnCreateAccount;
+
+    private EditText txtEmail;
+    private EditText txtPassword;
+    private EditText txtName;
+    private EditText txtCountry;
+    private EditText txtPhoneNumber;
+
     View rootView;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_login, container, false);
+        View view = inflater.inflate(R.layout.fragment_create_account, container, false);
         rootView = view;
 
-        btnLogin = (Button) view.findViewById(R.id.email_sign_in_button);
-        btnLogin.setOnClickListener(this);
         btnCreateAccount = (Button) view.findViewById(R.id.btnCreateAccount);
         btnCreateAccount.setOnClickListener(this);
-        txtEmail = (EditText)view.findViewById(R.id.email);
-        txtPassword = (EditText)view.findViewById(R.id.password);
+
+        txtName = (EditText) view.findViewById(R.id.txtName);
+        txtCountry = (EditText) view.findViewById(R.id.txtCountry);
+        txtPhoneNumber = (EditText) view.findViewById(R.id.txtPhoneNumber);
+        txtEmail = (EditText) view.findViewById(R.id.txtEmail);
+        txtPassword = (EditText) view.findViewById(R.id.txtPassword);
+
+        txtName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (txtName.getText().toString().trim().isEmpty()) {
+                    txtName.setError("El nombre es obligatorio");
+                }
+            }
+        });
+
+        txtPhoneNumber.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (txtPhoneNumber.getText().toString().trim().isEmpty()) {
+                    txtPhoneNumber.setError("El celular es obligatorio");
+                    return;
+                }
+
+                if (!Patterns.PHONE.matcher(txtPhoneNumber.getText().toString().trim()).matches()) {
+                    txtPhoneNumber.setError("El celular no tiene el formato correcto");
+                    return;
+                }
+            }
+        });
 
         txtEmail.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -63,31 +93,42 @@ public class LoginFragment extends android.app.Fragment implements View.OnClickL
         return view;
     }
 
-
     @Override
     public void onClick(View v) {
 
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.email_sign_in_button:
-                if (validateForm())
-                    login(v);
+                //login(v);
                 break;
 
             case R.id.btnCreateAccount:
-                createAccount(v);
+                if (validateForm())
+                    createAccount(v);
+                break;
+
+            case R.id.txtCountry:
                 break;
         }
     }
 
-    private void createAccount(View v) {
-        FragmentManager fm = getFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(R.id.login_fragment, new CreateAccountFragment(), "fragment_screen");
-        ft.commit();
-    }
-
     private boolean validateForm() {
         boolean isValid = true;
+
+        if (txtName.getText().toString().trim().isEmpty()) {
+            txtName.setError("El nombre es obligatorio");
+            isValid = false;
+        }
+
+        if (!Patterns.PHONE.matcher(txtPhoneNumber.getText().toString().trim()).matches()) {
+            txtPhoneNumber.setError("El celular no tiene el formato correcto");
+            isValid = false;
+        }
+
+        if (txtPhoneNumber.getText().toString().trim().isEmpty()) {
+            txtPhoneNumber.setError("El celular es obligatorio");
+            isValid = false;
+        }
+
 
         if (!Patterns.EMAIL_ADDRESS.matcher(txtEmail.getText().toString().trim()).matches()) {
             txtEmail.setError("El email no tiene el formato correcto");
@@ -100,27 +141,33 @@ public class LoginFragment extends android.app.Fragment implements View.OnClickL
         }
 
         if (txtPassword.getText().toString().trim().isEmpty()) {
-            txtPassword.setError("La contraseña es obligatoria");
+            txtPassword.setError("La contraseña es obligatorio");
             isValid = false;
         }
 
         return isValid;
     }
 
-    private void login(View v) {
+
+    private void createAccount(View v) {
+
         try {
 
             RequestVolley requestVolley = new RequestVolley(this.getActivity());
 
             Map<String, String> params = new HashMap<>();
+            params.put("name", txtName.getText().toString());
+            params.put("country", txtCountry.getText().toString());
+            params.put("phoneNumber", txtPhoneNumber.getText().toString());
             params.put("email", txtEmail.getText().toString());
             params.put("password", txtPassword.getText().toString());
 
-            requestVolley.post(Constants.urlBase, Constants.urlSpecificLogin, params);
+            requestVolley.post(Constants.urlBase, Constants.urlSpecificCreateAccount, params);
 
         } catch (Exception e) {
             General.showAlert(v, "Ocurrió un problema", "Login");
         }
     }
+
 
 }

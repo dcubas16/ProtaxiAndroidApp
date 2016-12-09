@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentLeft="false"
         android:layout_alignParentStart="true"
-        android:background="#ffc9c9"
+        android:background="#333333"
         android:layout_marginLeft="0dp"
         android:layout_marginTop="0dp"
         android:layout_marginRight="0dp"
@@ -30,32 +30,19 @@
         <Button
             android:layout_width="189dp"
             android:layout_height="68dp"
-            android:text="Llamar Taxi"
-            android:id="@+id/btnLlamarTaxi"
-            android:layout_gravity="center" />
+            android:text="Llamar Rest"
+            android:id="@+id/btnLlamarRest"
+            android:layout_gravity="center_horizontal|top"
+            android:visibility="invisible" />
 
         <Button
             android:layout_width="189dp"
             android:layout_height="68dp"
-            android:text="Llamar Rest"
-            android:id="@+id/btnLlamarRest"
-            android:layout_gravity="center_horizontal|top" />
+            android:text="Llamar Taxi"
+            android:id="@+id/btnLlamarTaxi"
+            android:layout_gravity="center_horizontal|bottom"
+            android:visibility="visible" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="41dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Medium Text"
-            android:id="@+id/txtRest"
-            android:layout_gravity="right|top" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Large Text"
-            android:id="@+id/txtRest1"
-            android:layout_gravity="right|center_vertical" />
     </FrameLayout>
 
 </RelativeLayout>
