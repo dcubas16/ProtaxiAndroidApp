@@ -2,7 +2,9 @@ package org.protaxiandroidapp;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.location.Geocoder;
 import android.net.Uri;
@@ -19,6 +21,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -35,32 +40,34 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import org.protaxiandroidapp.restful.entities.Greeting;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import layout.AboutFragment;
-import layout.LoginFragment;
+import layout.Constants;
+import layout.General;
 import layout.SendFragment;
 
 public class MainWindow extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener {
 
-    SupportMapFragment supportMapFragment;
-    Firebase mRef;
-    MarkerOptions markerOptions;
-    Button btnRequestTaxi;
-    Marker marker;
-    Button btnLlamarRest;
-    //TextView txtRest = (TextView)findViewById(R.id.txtRest1);
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
+    private SupportMapFragment supportMapFragment;
+    private Firebase mRef;
+    private MarkerOptions markerOptions;
+    private Button btnRequestTaxi;
+    private Marker marker;
+    private Button btnLlamarRest;
+    private SharedPreferences sharedPreferences;
     private GoogleApiClient client;
+    public static TextView userName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,22 +94,37 @@ public class MainWindow extends AppCompatActivity
         if (supportMapFragment.isAdded())
             sFm.beginTransaction().hide(supportMapFragment).commit();
 
-
         sFm.beginTransaction().add(R.id.content_frame, supportMapFragment).commit();
-
-
-//        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment);
-
 
         drawer.closeDrawer(GravityCompat.START);
 
 
         supportMapFragment.getMapAsync(this);
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
+
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
         Firebase.setAndroidContext(this);
+
+        View headerView =  navigationView.getHeaderView(0);
+
+        TextView appName = (TextView)headerView.findViewById(R.id.appName);
+        appName.setText("Hola");
+
+        userName = (TextView)headerView.findViewById(R.id.userName);
+
+        if( !getSharedPreferences(Constants.ProtaxiPreferences, Context.MODE_PRIVATE).contains("protaxiUserId") ){
+            sharedPreferences = getSharedPreferences(Constants.ProtaxiPreferences, Context.MODE_PRIVATE);
+
+            SharedPreferences.Editor editor = getSharedPreferences(Constants.ProtaxiPreferences, MODE_PRIVATE).edit();
+            editor.putString("protaxiUserName", "");
+            editor.putString("protaxiUserId", "");
+            editor.putInt("protaxiUserIsLogged", 0);
+            editor.commit();
+        }else
+        {
+            String loggedUserName = getSharedPreferences(Constants.ProtaxiPreferences, Context.MODE_PRIVATE).getString("protaxiUserName", "");
+            userName.setText("Bienvenido " + loggedUserName);
+        }
     }
 
     @Override
@@ -150,9 +172,13 @@ public class MainWindow extends AppCompatActivity
             sFm.beginTransaction().hide(supportMapFragment).commit();
 
         if (id == R.id.nav_login) {
-            fragment = new LoginFragment();
+//            fragment = new LoginFragment();
+//
+//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
 
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+
             Log.e("Fragment", "Login");
 
         } else if (id == R.id.nav_share) {

@@ -1,10 +1,8 @@
 package org.protaxiandroidapp.restful;
 
-import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
-
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -12,10 +10,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-
 import org.json.JSONObject;
-
 import java.util.Map;
 
 /**
@@ -26,12 +21,17 @@ public class RequestVolley {
     private VolleyS volley;
     protected RequestQueue fRequestQueue;
     Context context;
-//    public Activity activity;
+    private String errorString;
+    private String responseString;
+    private int indicatorProccess;// 0-No iniciado  -1-Iniciado -2-Terminado
 
     public RequestVolley(Context context){
         this.context = context;
         volley = VolleyS.getInstance(context.getApplicationContext());
         fRequestQueue = volley.getRequestQueue();
+        setErrorString("");
+        setResponseString("");
+        setIndicatorProccess(0);
     }
 
     public void get(String urlBase, String urlSpecific, Map<String, String> params){
@@ -64,7 +64,6 @@ public class RequestVolley {
     }
 
     public void post(String urlBase, String urlSpecific, final Map<String, String> params){
-
         String url = urlBase + urlSpecific;
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
@@ -72,16 +71,18 @@ public class RequestVolley {
                 {
                     @Override
                     public void onResponse(String response) {
-                        // response
+                        setResponseString(response);
                         Log.d("Response", response);
+                        setIndicatorProccess(2);
                     }
                 },
                 new Response.ErrorListener()
                 {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // error
+                        setErrorString(error.getMessage());
                         Log.d("Error.Response", error.getMessage());
+                        setIndicatorProccess(2);
                     }
                 }
         ) {
@@ -93,32 +94,67 @@ public class RequestVolley {
         };
 
         addToQueue(postRequest);
+
+        int aux = 0;
+        while (getIndicatorProccess() != 2){
+            aux += 1;
+        }
     }
 
     public void onPreStartConnection() {
         //getActivity().setProgressBarIndeterminateVisibility(true);
+        setIndicatorProccess(1);
     }
 
     public void onConnectionFinished() {
         //getActivity().setProgressBarIndeterminateVisibility(false);
+        setIndicatorProccess(2);
     }
 
     public void onConnectionFailed(String error) {
         //getActivity().setProgressBarIndeterminateVisibility(false);
         Toast.makeText(this.context, error, Toast.LENGTH_SHORT).show();
+        setIndicatorProccess(2);
     }
 
     public void addToQueue(Request request) {
-        if (request != null) {
-            request.setTag(this);
-            if (fRequestQueue == null)
-                fRequestQueue = volley.getRequestQueue();
-            request.setRetryPolicy(new DefaultRetryPolicy(
-                    6000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
-            onPreStartConnection();
-            fRequestQueue.add(request);
+        try {
+            if (request != null) {
+                request.setTag(this);
+                if (fRequestQueue == null)
+                    fRequestQueue = volley.getRequestQueue();
+                request.setRetryPolicy(new DefaultRetryPolicy(
+                        10000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                ));
+                onPreStartConnection();
+                fRequestQueue.add(request);
+            }
+        }catch (Exception e){
+            Log.d("Error.Response", e.getMessage());
         }
     }
 
+    public String getErrorString() {
+        return errorString;
+    }
+
+    public void setErrorString(String errorString) {
+        this.errorString = errorString;
+    }
+
+    public String getResponseString() {
+        return responseString;
+    }
+
+    public void setResponseString(String responseString) {
+        this.responseString = responseString;
+    }
+
+    public int getIndicatorProccess() {
+        return indicatorProccess;
+    }
+
+    public void setIndicatorProccess(int indicatorProccess) {
+        this.indicatorProccess = indicatorProccess;
+    }
 }
