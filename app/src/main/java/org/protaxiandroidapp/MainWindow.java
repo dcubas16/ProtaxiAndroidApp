@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,10 +32,7 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -45,19 +43,22 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import org.protaxiandroidapp.restful.entities.Greeting;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import layout.AboutFragment;
 import layout.Constants;
 import layout.SendFragment;
 
 public class MainWindow extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener, GeoTask.Geo {
 
     private SupportMapFragment supportMapFragment;
     private Firebase mRef;
@@ -70,10 +71,16 @@ public class MainWindow extends AppCompatActivity
     public static TextView userName;
     private LinearLayout linearLayoutOrigin;
     private LinearLayout linearLayoutDestiny;
+    private RelativeLayout streetTaxiLayout;
+
     private TextView textViewOriginPlace;
     private TextView textViewReferenceOriginPlace;
     private TextView textViewDestinyPlace;
     private TextView textViewReferenceDestinyPlace;
+
+    private TextView textViewAproxTimeStreetTaxi;
+    private TextView textViewAproxDistanceStreetTaxi;
+
     private String originPlaceId;
     private String destinyPlaceId;
 
@@ -90,13 +97,18 @@ public class MainWindow extends AppCompatActivity
 
         linearLayoutOrigin = (LinearLayout)findViewById(R.id.linearLayoutOrigin);
         linearLayoutDestiny = (LinearLayout)findViewById(R.id.linearLayoutDestiny);
+        streetTaxiLayout = (RelativeLayout)findViewById(R.id.streetTaxiLayout);
+
         textViewOriginPlace = (TextView)findViewById(R.id.textViewOriginPlace);
         textViewReferenceOriginPlace = (TextView)findViewById(R.id.textViewReferenceOriginPlace);
         textViewDestinyPlace = (TextView)findViewById(R.id.textViewDestinyPlace);
         textViewReferenceDestinyPlace = (TextView)findViewById(R.id.textViewReferenceDestinyPlace);
+        textViewAproxTimeStreetTaxi = (TextView)findViewById(R.id.textViewAproxTimeStreetTaxi);
+        textViewAproxDistanceStreetTaxi = (TextView)findViewById(R.id.textViewAproxDistanceStreetTaxi);
 
         linearLayoutOrigin.setOnClickListener(this);
         linearLayoutDestiny.setOnClickListener(this);
+        streetTaxiLayout.setOnClickListener(this);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -341,10 +353,17 @@ public class MainWindow extends AppCompatActivity
 
             case R.id.linearLayoutDestiny:
                 intent = new Intent(getApplicationContext(), SpikeAutocompleteActivity.class);
-                intent.putExtra("requestLayout",1);
+                intent.putExtra("requestLayout", 1);
                 startActivityForResult(intent, 0);
+
                 break;
 
+            case R.id.streetTaxiLayout:
+                intent = new Intent(getApplicationContext(), RequestTaxiConfirmationActivity.class);
+//                intent.putExtra("requestLayout", 1);
+                startActivityForResult(intent, 0);
+
+                break;
             /*ESTO ES CON EL MAPA*/
 //            case R.id.linearLayoutOrigin:
 //                try {
@@ -383,6 +402,13 @@ public class MainWindow extends AppCompatActivity
                     textViewDestinyPlace.setText(data.getCharSequenceExtra("firstText").toString());
                     textViewReferenceDestinyPlace.setText(data.getCharSequenceExtra("secondText").toString());
                     destinyPlaceId = data.getCharSequenceExtra("placeId").toString();
+
+                    String strOrigin = textViewOriginPlace.getText().toString() + ", " +textViewReferenceOriginPlace.getText().toString();
+                    String strDestiny = textViewDestinyPlace.getText().toString() + ", " +textViewReferenceDestinyPlace.getText().toString();
+                    String mode = "driving";
+                    String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins="+strOrigin+"&destinations="+strDestiny+"&mode="+mode+"&language=es-PE&key=AIzaSyAO54dr--EDl-AgszBKvUGGQ5f9gDMtaOk";
+                    new GeoTask(this).execute(url.replace(' ','+'));
+
                     break;
                 case -1:
                     Toast.makeText(this, "Ocurrió un problema al obtener la dirección", Toast.LENGTH_SHORT).show();
@@ -417,6 +443,18 @@ public class MainWindow extends AppCompatActivity
     @Override
     public boolean onMyLocationButtonClick() {
         return false;
+    }
+
+    @Override
+    public void setDouble(String result) {
+        String res[]=result.split(",");
+        Double min = Double.parseDouble(res[0])/60;
+        int dist = Integer.parseInt(res[1])/1000;
+
+        textViewAproxTimeStreetTaxi.setText("Duration= " + (int) (min / 60) + " hr " + (int) (min % 60) + " mins");
+        textViewAproxDistanceStreetTaxi.setText("Distance= " + dist + " kilometers");
+//        tv_result1.setText("Duration= " + (int) (min / 60) + " hr " + (int) (min % 60) + " mins");
+//        tv_result2.setText("Distance= " + dist + " kilometers");
     }
 
     private class HttpRequestTask extends AsyncTask<Void, Void, Greeting> {

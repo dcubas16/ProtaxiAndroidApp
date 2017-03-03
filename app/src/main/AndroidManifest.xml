@@ -85,7 +85,8 @@
         <activity android:name=".CreateAccountActivity" />
         <activity android:name=".SearchPlaceActivity" />
         <activity android:name=".SpikeSearchPlace" />
-        <activity android:name=".SpikeAutocompleteActivity"></activity>
+        <activity android:name=".SpikeAutocompleteActivity" />
+        <activity android:name=".RequestTaxiConfirmationActivity"></activity>
     </application>
 
 </manifest>

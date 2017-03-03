@@ -138,7 +138,8 @@
                 <RelativeLayout
                     android:layout_width="130dp"
                     android:layout_height="match_parent"
-                    android:background="#ae42b2">
+                    android:background="#ae42b2"
+                    android:id="@+id/streetTaxiLayout">
 
                     <TableLayout
                         android:layout_width="match_parent"

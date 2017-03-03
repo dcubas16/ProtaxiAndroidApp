@@ -26,5 +26,6 @@
     </string>
     <string name="create_account">Create account</string>
     <string name="google_place_api">AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs</string>
+    <string name="google_distance_atrix_api_key">AIzaSyAO54dr--EDl-AgszBKvUGGQ5f9gDMtaOk</string>
 
 </resources>
