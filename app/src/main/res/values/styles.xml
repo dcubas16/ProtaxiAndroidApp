@@ -17,4 +17,12 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <!-- Base application theme. -->
+    <style name="ProtaxoAutocomplete">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">#ea60ff</item>
+        <item name="colorPrimaryDark">#ea60ff</item>
+        <item name="colorAccent">#ea60ff</item>
+    </style>
+
 </resources>

@@ -21,8 +21,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
@@ -30,7 +31,11 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -40,24 +45,19 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import org.protaxiandroidapp.restful.entities.Greeting;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
-import org.w3c.dom.Text;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import layout.AboutFragment;
 import layout.Constants;
-import layout.General;
 import layout.SendFragment;
 
 public class MainWindow extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener {
 
     private SupportMapFragment supportMapFragment;
     private Firebase mRef;
@@ -68,6 +68,16 @@ public class MainWindow extends AppCompatActivity
     private SharedPreferences sharedPreferences;
     private GoogleApiClient client;
     public static TextView userName;
+    private LinearLayout linearLayoutOrigin;
+    private LinearLayout linearLayoutDestiny;
+    private TextView textViewOriginPlace;
+    private TextView textViewReferenceOriginPlace;
+    private TextView textViewDestinyPlace;
+    private TextView textViewReferenceDestinyPlace;
+    private String originPlaceId;
+    private String destinyPlaceId;
+
+    int PLACE_PICKER_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +87,16 @@ public class MainWindow extends AppCompatActivity
         setContentView(R.layout.activity_main_window);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        linearLayoutOrigin = (LinearLayout)findViewById(R.id.linearLayoutOrigin);
+        linearLayoutDestiny = (LinearLayout)findViewById(R.id.linearLayoutDestiny);
+        textViewOriginPlace = (TextView)findViewById(R.id.textViewOriginPlace);
+        textViewReferenceOriginPlace = (TextView)findViewById(R.id.textViewReferenceOriginPlace);
+        textViewDestinyPlace = (TextView)findViewById(R.id.textViewDestinyPlace);
+        textViewReferenceDestinyPlace = (TextView)findViewById(R.id.textViewReferenceDestinyPlace);
+
+        linearLayoutOrigin.setOnClickListener(this);
+        linearLayoutDestiny.setOnClickListener(this);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -146,12 +166,8 @@ public class MainWindow extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -172,9 +188,6 @@ public class MainWindow extends AppCompatActivity
             sFm.beginTransaction().hide(supportMapFragment).commit();
 
         if (id == R.id.nav_login) {
-//            fragment = new LoginFragment();
-//
-//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
 
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             startActivity(intent);
@@ -251,21 +264,6 @@ public class MainWindow extends AppCompatActivity
     }
 
     @Override
-    public void activate(OnLocationChangedListener onLocationChangedListener) {
-
-    }
-
-    @Override
-    public void deactivate() {
-
-    }
-
-    @Override
-    public boolean onMyLocationButtonClick() {
-        return false;
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
 
@@ -280,7 +278,7 @@ public class MainWindow extends AppCompatActivity
             public void onClick(View v) {
 
                 mRef.setValue("-77.077962");
-                mRefLlamar.setValue(1);
+                mRefLlamar.setValue(5);
 
 //                Intent i = new Intent(getApplicationContext(), CreateAccountActivity.class);
 //                startActivity(i);
@@ -328,24 +326,97 @@ public class MainWindow extends AppCompatActivity
         AppIndex.AppIndexApi.start(client, viewAction);
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "MainWindow Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://org.protaxiandroidapp/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
+
+    @Override
+    public void onClick(View v) {
+        PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
+        Intent intent;
+        switch (v.getId()){
+            case R.id.linearLayoutOrigin:
+                intent = new Intent(getApplicationContext(), SpikeAutocompleteActivity.class);
+                intent.putExtra("requestLayout",0);
+                startActivityForResult(intent, 0);
+                break;
+
+            case R.id.linearLayoutDestiny:
+                intent = new Intent(getApplicationContext(), SpikeAutocompleteActivity.class);
+                intent.putExtra("requestLayout",1);
+                startActivityForResult(intent, 0);
+                break;
+
+            /*ESTO ES CON EL MAPA*/
+//            case R.id.linearLayoutOrigin:
+//                try {
+//                    startActivityForResult(intentBuilder.build(this), PLACE_PICKER_REQUEST);
+//                } catch (GooglePlayServicesRepairableException e) {
+//                    e.printStackTrace();
+//                } catch (GooglePlayServicesNotAvailableException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+
+//            case R.id.linearLayoutDestiny:
+//                try {
+//                    startActivityForResult(intentBuilder.build(this), PLACE_PICKER_REQUEST);
+//                } catch (GooglePlayServicesRepairableException e) {
+//                    e.printStackTrace();
+//                } catch (GooglePlayServicesNotAvailableException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+
+        if(resultCode == RESULT_OK){
+            switch (data.getIntExtra("requestLayout", -1)){
+                case 0:
+                    textViewOriginPlace.setText(data.getCharSequenceExtra("firstText").toString());
+                    textViewReferenceOriginPlace.setText(data.getCharSequenceExtra("secondText").toString());
+                    originPlaceId = data.getCharSequenceExtra("placeId").toString();
+                    break;
+                case 1:
+                    textViewDestinyPlace.setText(data.getCharSequenceExtra("firstText").toString());
+                    textViewReferenceDestinyPlace.setText(data.getCharSequenceExtra("secondText").toString());
+                    destinyPlaceId = data.getCharSequenceExtra("placeId").toString();
+                    break;
+                case -1:
+                    Toast.makeText(this, "Ocurrió un problema al obtener la dirección", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+
+        }
+
+
+        super.onActivityResult(requestCode, resultCode, data);
+
+        /*ESTO ES CON EL MAPA*/
+//        if(requestCode == PLACE_PICKER_REQUEST){
+//            if(resultCode == RESULT_OK){
+//                Place place = PlacePicker.getPlace(data, this);
+//                String address = String.format("Place: %s", place.getAddress());
+//                textViewPlace.setText(address);
+//            }
+//        }
+    }
+
+    @Override
+    public void activate(OnLocationChangedListener onLocationChangedListener) {
+
+    }
+
+    @Override
+    public void deactivate() {
+
+    }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        return false;
     }
 
     private class HttpRequestTask extends AsyncTask<Void, Void, Greeting> {

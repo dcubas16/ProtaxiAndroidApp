@@ -25,4 +25,6 @@
         completions."
     </string>
     <string name="create_account">Create account</string>
+    <string name="google_place_api">AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs</string>
+
 </resources>
