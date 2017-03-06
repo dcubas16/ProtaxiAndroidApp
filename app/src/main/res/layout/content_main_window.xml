@@ -45,7 +45,7 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="85dp"
+            android:layout_height="95dp"
             android:visibility="visible"
             android:translationZ="100dp"
             android:background="#ea60ff"
@@ -70,8 +70,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="Medium Text"
-                        android:id="@+id/textViewOriginPlace" />
+                        android:id="@+id/textViewOriginPlace"
+                        android:hint="Origen" />
                 </TableRow>
 
                 <TableRow
@@ -82,7 +82,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Small Text"
                         android:id="@+id/textViewReferenceOriginPlace" />
                 </TableRow>
 
@@ -104,8 +103,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="Medium Text"
-                        android:id="@+id/textViewDestinyPlace" />
+                        android:id="@+id/textViewDestinyPlace"
+                        android:hint="Destino" />
                 </TableRow>
 
                 <TableRow
@@ -116,7 +115,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Small Text"
                         android:id="@+id/textViewReferenceDestinyPlace" />
                 </TableRow>
             </TableLayout>
@@ -228,6 +226,13 @@
                         </TableRow>
                     </TableLayout>
                 </RelativeLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Small Text"
+                    android:id="@+id/textViewLocation" />
 
             </LinearLayout>
         </RelativeLayout>

@@ -2,6 +2,8 @@ package org.protaxiandroidapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -12,6 +14,11 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,10 +31,12 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 public class SpikeAutocompleteActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+
     private AutoCompleteTextView autoCompleteTextView;
     private static final String LOG_TAG = "Google Places Autocom";
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
     private static final String TYPE_AUTOCOMPLETE = "/autocomplete";
+    private static final String TYPE_DETAILS = "/details";
     private static final String OUT_JSON = "/json";
     private static final String API_KEY = "AIzaSyDNybAQ9SxRLRzy6Gsn8p_O6Cjqbj16Nb0";
     private static JSONArray predsJsonArray;
@@ -36,18 +45,26 @@ public class SpikeAutocompleteActivity extends AppCompatActivity implements Adap
     private String secondText;
     private String placeId;
     private int requestLayout;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_spike_autocomplete);
-        autoCompleteTextView = (AutoCompleteTextView)findViewById(R.id.autoCompleteTextView);
+        autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
         autoCompleteTextView.setThreshold(2);//definir la cantidad de caracteres
         autoCompleteTextView.setAdapter(new GooglePlacesAutocompleteAdapter(getApplicationContext(), R.layout.list_item));
         autoCompleteTextView.setOnItemClickListener(this);
 
-        requestLayout = getIntent().getIntExtra("requestLayout",-1);
+        requestLayout = getIntent().getIntExtra("requestLayout", -1);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -56,12 +73,15 @@ public class SpikeAutocompleteActivity extends AppCompatActivity implements Adap
         firstText = "";
         secondText = "";
         placeId = "";
+        Location locationPlace = new Location("");
 
         try {
             firstText = predsJsonArray.getJSONObject(position).getJSONObject("structured_formatting").getString("main_text");
             secondText = predsJsonArray.getJSONObject(position).getJSONObject("structured_formatting").getString("secondary_text");
             placeId = predsJsonArray.getJSONObject(position).getString("place_id");
+//            locationPlace = getLocationByPlaceId(placeId, firstText + ", " + secondText);
             Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
+
         } catch (JSONException e) {
             e.printStackTrace();
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -71,6 +91,8 @@ public class SpikeAutocompleteActivity extends AppCompatActivity implements Adap
         intent.putExtra("firstText", firstText);
         intent.putExtra("secondText", secondText);
         intent.putExtra("placeId", placeId);
+        intent.putExtra("lat", locationPlace.getLatitude());
+        intent.putExtra("lng", locationPlace.getLongitude());
         intent.putExtra("requestLayout", requestLayout);
         setResult(RESULT_OK, intent);
         finish();
@@ -127,6 +149,47 @@ public class SpikeAutocompleteActivity extends AppCompatActivity implements Adap
         }
 
         return resultList;
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "SpikeAutocomplete Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://org.protaxiandroidapp/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "SpikeAutocomplete Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://org.protaxiandroidapp/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
     }
 
     class GooglePlacesAutocompleteAdapter extends ArrayAdapter implements Filterable {

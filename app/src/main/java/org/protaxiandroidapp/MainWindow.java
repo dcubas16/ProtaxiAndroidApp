@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -58,7 +59,9 @@ import layout.Constants;
 import layout.SendFragment;
 
 public class MainWindow extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener, GeoTask.Geo {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback
+        , LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener
+        , GeoTask.Geo, AddressDetail.MyLocation {
 
     private SupportMapFragment supportMapFragment;
     private Firebase mRef;
@@ -77,12 +80,16 @@ public class MainWindow extends AppCompatActivity
     private TextView textViewReferenceOriginPlace;
     private TextView textViewDestinyPlace;
     private TextView textViewReferenceDestinyPlace;
+    private TextView textViewLocation;
 
     private TextView textViewAproxTimeStreetTaxi;
     private TextView textViewAproxDistanceStreetTaxi;
 
     private String originPlaceId;
     private String destinyPlaceId;
+
+    private Location locationOrigin;
+    private Location locationDestiny;
 
     int PLACE_PICKER_REQUEST = 1;
 
@@ -105,6 +112,7 @@ public class MainWindow extends AppCompatActivity
         textViewReferenceDestinyPlace = (TextView)findViewById(R.id.textViewReferenceDestinyPlace);
         textViewAproxTimeStreetTaxi = (TextView)findViewById(R.id.textViewAproxTimeStreetTaxi);
         textViewAproxDistanceStreetTaxi = (TextView)findViewById(R.id.textViewAproxDistanceStreetTaxi);
+        textViewLocation = (TextView)findViewById(R.id.textViewLocation);
 
         linearLayoutOrigin.setOnClickListener(this);
         linearLayoutDestiny.setOnClickListener(this);
@@ -246,6 +254,7 @@ public class MainWindow extends AppCompatActivity
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
+        /*ESTO ES PARA LA UBICACIÓN DE LOS TAXIS EN LOS MAPAS*/
 
         markerOptions = new MarkerOptions().position(sydney).snippet("Toyota Corolla 2015 \n Placa: PKY-4596\n *****");
         markerOptions.title(getAddressFromLatLng(sydney));
@@ -407,14 +416,16 @@ public class MainWindow extends AppCompatActivity
                     String strDestiny = textViewDestinyPlace.getText().toString() + ", " +textViewReferenceDestinyPlace.getText().toString();
                     String mode = "driving";
                     String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins="+strOrigin+"&destinations="+strDestiny+"&mode="+mode+"&language=es-PE&key=AIzaSyAO54dr--EDl-AgszBKvUGGQ5f9gDMtaOk";
+                    String urlAddreesDetail = "https://maps.googleapis.com/maps/api/place/details/json?placeid="+destinyPlaceId+"&key=AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs";
+
                     new GeoTask(this).execute(url.replace(' ','+'));
+                    new AddressDetail(this).execute(urlAddreesDetail);
 
                     break;
                 case -1:
                     Toast.makeText(this, "Ocurrió un problema al obtener la dirección", Toast.LENGTH_SHORT).show();
                     break;
             }
-
         }
 
 
@@ -455,6 +466,11 @@ public class MainWindow extends AppCompatActivity
         textViewAproxDistanceStreetTaxi.setText("Distance= " + dist + " kilometers");
 //        tv_result1.setText("Duration= " + (int) (min / 60) + " hr " + (int) (min % 60) + " mins");
 //        tv_result2.setText("Distance= " + dist + " kilometers");
+    }
+
+    @Override
+    public void setMyLocation(Location location) {
+        textViewLocation.setText("Ubicación " + location.getLatitude() + " - " + location.getLongitude());
     }
 
     private class HttpRequestTask extends AsyncTask<Void, Void, Greeting> {
