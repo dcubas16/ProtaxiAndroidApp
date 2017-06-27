@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
+import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -37,6 +39,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -45,6 +48,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.protaxiandroidapp.entities.RequestTaxi;
 import org.protaxiandroidapp.restful.entities.Greeting;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -53,6 +57,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import layout.AboutFragment;
 import layout.Constants;
@@ -61,7 +66,7 @@ import layout.SendFragment;
 public class MainWindow extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback
         , LocationSource, GoogleMap.OnMyLocationButtonClickListener, View.OnClickListener
-        , GeoTask.Geo, AddressDetail.MyLocation {
+        , GeoTask.Geo, AddressDetail.MyLocation, OnCameraIdleListener{
 
     private SupportMapFragment supportMapFragment;
     private Firebase mRef;
@@ -91,7 +96,14 @@ public class MainWindow extends AppCompatActivity
     private Location locationOrigin;
     private Location locationDestiny;
 
-    int PLACE_PICKER_REQUEST = 1;
+    private int PLACE_PICKER_REQUEST = 1;
+    private int placeFlag = -1;
+
+    private ImageView imageViewMapIconCenter;
+
+    private GoogleMap generalGoogleMap;
+
+    private RequestTaxi requestTaxi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,9 +126,13 @@ public class MainWindow extends AppCompatActivity
         textViewAproxDistanceStreetTaxi = (TextView)findViewById(R.id.textViewAproxDistanceStreetTaxi);
         textViewLocation = (TextView)findViewById(R.id.textViewLocation);
 
+        imageViewMapIconCenter  = (ImageView)findViewById(R.id.imageViewMapIconCenter);
+
         linearLayoutOrigin.setOnClickListener(this);
         linearLayoutDestiny.setOnClickListener(this);
         streetTaxiLayout.setOnClickListener(this);
+
+        imageViewMapIconCenter.setImageResource(R.mipmap.ic_my_location);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -245,6 +261,7 @@ public class MainWindow extends AppCompatActivity
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         googleMap.setMyLocationEnabled(true);
 
         LatLng sydney = new LatLng(-11.991039, -77.078902);
@@ -253,6 +270,7 @@ public class MainWindow extends AppCompatActivity
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 15));
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+        googleMap.setOnCameraIdleListener(this);
 
         /*ESTO ES PARA LA UBICACIÓN DE LOS TAXIS EN LOS MAPAS*/
 
@@ -264,10 +282,11 @@ public class MainWindow extends AppCompatActivity
         markerOptions1.title(getAddressFromLatLng(sydney));
         markerOptions1.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_local_taxi_red)));
 
-
         marker = googleMap.addMarker(markerOptions);
         marker.setTitle("Diego Nuñez Cubas");
         googleMap.addMarker(markerOptions1).setTitle("Juan Carlos Suarez");
+
+        generalGoogleMap = googleMap;
 
     }
 
@@ -369,7 +388,17 @@ public class MainWindow extends AppCompatActivity
 
             case R.id.streetTaxiLayout:
                 intent = new Intent(getApplicationContext(), RequestTaxiConfirmationActivity.class);
-//                intent.putExtra("requestLayout", 1);
+                intent.putExtra("requestLayout", 2);
+                intent.putExtra("latOrigin", requestTaxi.getLatOrigin());
+                intent.putExtra("lngOrigin", requestTaxi.getLngOrigin());
+                intent.putExtra("originAddress", requestTaxi.getOriginAddress());
+                intent.putExtra("originAddressNumber", requestTaxi.getOriginAddressNumber());
+                intent.putExtra("originReference", requestTaxi.getOriginReference());
+                intent.putExtra("latDestination", requestTaxi.getLatDestination());
+                intent.putExtra("lngDestination", requestTaxi.getLngDestination());
+                intent.putExtra("destinationReference", requestTaxi.getDestinationReference());
+                intent.putExtra("parmentTypeId", requestTaxi.getLatOrigin());
+                intent.putExtra("serviceTypeId", requestTaxi.getServiceTypeId());
                 startActivityForResult(intent, 0);
 
                 break;
@@ -400,12 +429,19 @@ public class MainWindow extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
 
+        String urlAddreesDetail = "";
+
         if(resultCode == RESULT_OK){
             switch (data.getIntExtra("requestLayout", -1)){
                 case 0:
                     textViewOriginPlace.setText(data.getCharSequenceExtra("firstText").toString());
                     textViewReferenceOriginPlace.setText(data.getCharSequenceExtra("secondText").toString());
                     originPlaceId = data.getCharSequenceExtra("placeId").toString();
+
+                    urlAddreesDetail = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + originPlaceId + "&key=AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs";
+                    placeFlag = 0;
+                    new AddressDetail(this).execute(urlAddreesDetail);
+
                     break;
                 case 1:
                     textViewDestinyPlace.setText(data.getCharSequenceExtra("firstText").toString());
@@ -416,20 +452,25 @@ public class MainWindow extends AppCompatActivity
                     String strDestiny = textViewDestinyPlace.getText().toString() + ", " +textViewReferenceDestinyPlace.getText().toString();
                     String mode = "driving";
                     String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins="+strOrigin+"&destinations="+strDestiny+"&mode="+mode+"&language=es-PE&key=AIzaSyAO54dr--EDl-AgszBKvUGGQ5f9gDMtaOk";
-                    String urlAddreesDetail = "https://maps.googleapis.com/maps/api/place/details/json?placeid="+destinyPlaceId+"&key=AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs";
+                    urlAddreesDetail = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + destinyPlaceId + "&key=AIzaSyBn7SSsguQVEpm5QPgY-PDRuiap85vUGIs";
 
                     new GeoTask(this).execute(url.replace(' ','+'));
+                    placeFlag = 1;
                     new AddressDetail(this).execute(urlAddreesDetail);
 
                     break;
+
                 case -1:
                     Toast.makeText(this, "Ocurrió un problema al obtener la dirección", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
 
+        placeFlag = -1;
 
         super.onActivityResult(requestCode, resultCode, data);
+
+//        placeFlag = -1;
 
         /*ESTO ES CON EL MAPA*/
 //        if(requestCode == PLACE_PICKER_REQUEST){
@@ -464,14 +505,74 @@ public class MainWindow extends AppCompatActivity
 
         textViewAproxTimeStreetTaxi.setText("Duration= " + (int) (min / 60) + " hr " + (int) (min % 60) + " mins");
         textViewAproxDistanceStreetTaxi.setText("Distance= " + dist + " kilometers");
-//        tv_result1.setText("Duration= " + (int) (min / 60) + " hr " + (int) (min % 60) + " mins");
-//        tv_result2.setText("Distance= " + dist + " kilometers");
     }
 
     @Override
     public void setMyLocation(Location location) {
+        switch (placeFlag){
+            case 0:
+                locationOrigin = location;
+                break;
+
+            case 1:
+                locationDestiny = location;
+                break;
+
+            case -1:
+                break;
+        }
+
         textViewLocation.setText("Ubicación " + location.getLatitude() + " - " + location.getLongitude());
+        placeFlag = -1;
+
+        locationDestiny = new Location("");
+        locationDestiny.setLatitude(location.getLatitude());
+        locationDestiny.setLongitude(location.getLongitude());
+
+        requestTaxi.setLatDestination(location.getLatitude());
+        requestTaxi.setLngDestination(location.getLongitude());
+        requestTaxi.setDestinationReference(textViewDestinyPlace.getText().toString());
     }
+
+    @Override
+    public void onCameraIdle() {
+        String address = "";
+        String locality = "";
+        String countryName = "";
+        String addressNumber = "";
+
+        LatLng latLng = generalGoogleMap.getCameraPosition().target;
+
+        Geocoder geocoder;
+        List<Address> yourAddresses;
+        geocoder = new Geocoder(this, Locale.getDefault());
+
+        try {
+            yourAddresses= geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+            if (yourAddresses.size() > 0)
+            {
+                address = yourAddresses.get(0).getAddressLine(0);
+                locality = yourAddresses.get(0).getLocality();
+                countryName = yourAddresses.get(0).getCountryName();
+                addressNumber = yourAddresses.get(0).getFeatureName();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        textViewOriginPlace.setText(address);
+        textViewReferenceOriginPlace.setText(locality + ", " + countryName);
+
+        requestTaxi = new RequestTaxi(latLng.latitude, latLng.longitude, address, addressNumber, "", -1.0, -1.0, textViewDestinyPlace.getText().toString(), "", "");
+
+//        locationOrigin.setLatitude(latLng.latitude);
+//        locationOrigin.setLongitude(latLng.longitude);
+//
+//        Toast.makeText(this, "La Camara dejó de moverse" + latLng.latitude + " -- lng = " + latLng.longitude + " Direccion: " + address
+//                , Toast.LENGTH_SHORT).show();
+    }
+
 
     private class HttpRequestTask extends AsyncTask<Void, Void, Greeting> {
 

@@ -239,4 +239,14 @@
 
     </FrameLayout>
 
+    <!--<ImageView android:layout_centerInParent="true"-->
+        <!--android:layout_height="30dp"-->
+        <!--android:layout_width="30dp"-->
+        <!--android:src="@drawable/" />-->
+
+    <ImageView android:layout_centerInParent="true"
+        android:layout_height="30dp"
+        android:layout_width="30dp"
+        android:id="@+id/imageViewMapIconCenter"/>
+
 </RelativeLayout>
